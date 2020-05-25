@@ -1,0 +1,54 @@
+---
+- block:
+    - name: Get latest release
+      uri:
+        url: https://api.github.com/repos/kubernetes-sigs/cluster-api-provider-aws/releases/latest
+        status_code: 200
+      register: clusterawsadm_release
+
+    - name: Assert latest version
+      assert:
+        that:
+          - clusterawsadm_release is defined
+          - clusterawsadm_release.json is defined
+          - clusterawsadm_release.json["tag_name"] is defined
+  when: clusterawsadm_version == "latest"
+
+- name: Set version to download
+  changed_when: false
+  set_fact:
+    clusterawsadm_version_to_install: |-
+      {{ (clusterawsadm_version == "latest") |
+      ternary(clusterawsadm_release.json["tag_name"], clusterawsadm_version)}}
+
+- import_tasks: clusterawsadm_version.yml
+
+- name: Determine if new version needs to be installed
+  changed_when: false
+  set_fact:
+    clusterawsadm_already_installed: |-
+      {{ existing_version.rc == 0 and (existing_version["stdout"].find(clusterawsadm_version_to_install) != -1) }}
+
+- block:
+    - name: Determine outputs directories and binary paths
+      set_fact:
+        clusterawsadm_artifact_name: 'clusterawsadm-{{ (ansible_facts["os_family"] == "Darwin") | ternary("darwin", "linux") }}-amd64'
+        clusterawsadm_dest: '/usr/local/bin/clusterawsadm'
+      changed_when: false
+
+    - name: Download clusterawsadm
+      get_url:
+        url: "https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/{{ clusterawsadm_version_to_install }}/{{ clusterawsadm_artifact_name }}"
+        dest: "{{ clusterawsadm_dest }}"
+        mode: "u+x,g+x,o+x"
+
+  when: not clusterawsadm_already_installed
+
+- import_tasks: clusterawsadm_version.yml
+
+- name: Assert that correct version of crew is installed
+  assert:
+    that:
+      - existing_version is defined
+      - existing_version.rc == 0
+      - existing_version.stdout.find(clusterawsadm_version_to_install) != -1

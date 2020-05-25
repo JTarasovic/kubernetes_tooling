@@ -1,0 +1,7 @@
+---
+
+- name: Get current clusterawsadm version
+  changed_when: false
+  failed_when: false
+  shell: clusterawsadm version  # noqa 305
+  register: existing_version

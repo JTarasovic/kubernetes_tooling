@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  collections:
+    - j_tarasovic.kubernetes_tooling
+  tasks:
+    - name: "Include install clusterawsadm"
+      include_role:
+        name: "install_clusterawsadm"
