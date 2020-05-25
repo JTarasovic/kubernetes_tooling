@@ -34,11 +34,12 @@
       set_fact:
         clusterawsadm_artifact_name: 'clusterawsadm-{{ (ansible_facts["os_family"] == "Darwin") | ternary("darwin", "linux") }}-amd64'
         clusterawsadm_dest: '/usr/local/bin/clusterawsadm'
+        clusterawsadm_download_slug: "{{ clusterawsadm_version_to_install }}/{{ clusterawsadm_artifact_name }}"
       changed_when: false
 
     - name: Download clusterawsadm
       get_url:
-        url: "https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/{{ clusterawsadm_version_to_install }}/{{ clusterawsadm_artifact_name }}"
+        url: "https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/{{ clusterawsadm_download_slug }}"
         dest: "{{ clusterawsadm_dest }}"
         mode: "u+x,g+x,o+x"
 
