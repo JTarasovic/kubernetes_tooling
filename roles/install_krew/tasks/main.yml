@@ -71,7 +71,7 @@
 
 - import_tasks: krew_version.yml
 
-- name: Assert that correct version of crew is installed
+- name: Assert that correct version of krew is installed
   assert:
     that:
       - existing_krew_version is defined

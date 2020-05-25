@@ -46,7 +46,7 @@
 
 - import_tasks: clusterctl_version.yml
 
-- name: Assert that correct version of crew is installed
+- name: Assert that correct version of clusterctl is installed
   assert:
     that:
       - existing_version is defined
