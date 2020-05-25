@@ -1,2 +1,3 @@
 ---
 # vars file for clusterawsadm
+base_url: 'https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases'
