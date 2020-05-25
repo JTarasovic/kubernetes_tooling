@@ -1,0 +1,7 @@
+---
+
+- name: Get current clusterctl version
+  changed_when: false
+  failed_when: false
+  shell: clusterctl version  # noqa 305
+  register: existing_version

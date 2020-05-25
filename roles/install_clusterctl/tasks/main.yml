@@ -1,0 +1,54 @@
+---
+- block:
+    - name: Get latest release
+      uri:
+        url: https://api.github.com/repos/kubernetes-sigs/cluster-api/releases/latest
+        status_code: 200
+      register: clusterctl_release
+
+    - name: Assert latest version
+      assert:
+        that:
+          - clusterctl_release is defined
+          - clusterctl_release.json is defined
+          - clusterctl_release.json["tag_name"] is defined
+  when: clusterctl_version == "latest"
+
+- name: Set version to download
+  changed_when: false
+  set_fact:
+    clusterctl_version_to_install: |-
+      {{ (clusterctl_version == "latest") |
+      ternary(clusterctl_release.json["tag_name"], clusterctl_version)}}
+
+- import_tasks: clusterctl_version.yml
+
+- name: Determine if new version needs to be installed
+  changed_when: false
+  set_fact:
+    clusterctl_already_installed: |-
+      {{ existing_version.rc == 0 and (existing_version["stdout"].find(clusterctl_version_to_install) != -1) }}
+
+- block:
+    - name: Determine outputs directories and binary paths
+      set_fact:
+        clusterctl_artifact_name: 'clusterctl-{{ (ansible_facts["os_family"] == "Darwin") | ternary("darwin", "linux") }}-amd64'
+        clusterctl_dest: '/usr/local/bin/clusterctl'
+      changed_when: false
+
+    - name: Download clusterctl
+      get_url:
+        url: "https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterctl_version_to_install }}/{{ clusterctl_artifact_name }}"
+        dest: "{{ clusterctl_dest }}"
+        mode: "u+x,g+x,o+x"
+
+  when: not clusterctl_already_installed
+
+- import_tasks: clusterctl_version.yml
+
+- name: Assert that correct version of crew is installed
+  assert:
+    that:
+      - existing_version is defined
+      - existing_version.rc == 0
+      - existing_version.stdout.find(clusterctl_version_to_install) != -1
