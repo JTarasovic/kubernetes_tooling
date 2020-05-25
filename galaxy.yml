@@ -1,5 +1,5 @@
 ---
-namespace: j_tarasovic
+namespace: jtarasovic
 name: kubernetes_tooling
 version: 0.0.1
 readme: README.md
