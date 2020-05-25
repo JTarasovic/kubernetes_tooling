@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  collections:
+    - j_tarasovic.kubernetes_tooling
+  tasks:
+    - name: "Include krew"
+      include_role:
+        name: "install_krew"

@@ -1,0 +1,90 @@
+---
+- block:
+    - name: Get latest release
+      uri:
+        url: https://api.github.com/repos/kubernetes-sigs/krew/releases/latest
+        status_code: 200
+      register: krew_release
+
+    - name: Assert latest version
+      assert:
+        that:
+          - krew_release is defined
+          - krew_release.json is defined
+          - krew_release.json["tag_name"] is defined
+  when: krew_version == "latest"
+
+- name: Set version to download
+  changed_when: false
+  set_fact:
+    krew_version_to_install: |-
+      {{ (krew_version == "latest") |
+      ternary(krew_release.json["tag_name"], krew_version)}}
+
+- import_tasks: krew_version.yml
+
+- name: Determine if new version needs to be installed
+  changed_when: false
+  set_fact:
+    krew_already_installed: |-
+      {{ existing_krew_version.rc == 0 and (existing_krew_version["stdout"].find(krew_version_to_install) != -1) }}
+
+- block:
+    - name: Create temp directory
+      tempfile:
+        state: directory
+        suffix: krew
+      register: install_temp_dir
+
+    - name: Determine outputs directories and binary paths
+      set_fact:
+        krew_bootstrap_binary_name: 'krew-{{ (ansible_facts["os_family"] == "Darwin") | ternary("darwin", "linux") }}_amd64'
+        krew_manifest_dest: "{{ install_temp_dir.path }}/krew.yaml"
+        krew_bootstrap_binary_dest: "{{ install_temp_dir.path }}/krew.tar.gz"
+      changed_when: false
+
+    - name: Download krew manifest
+      get_url:
+        url: "https://github.com/kubernetes-sigs/krew/releases/download/{{ krew_version_to_install }}/krew.yaml"
+        dest: "{{ krew_manifest_dest }}"
+
+    - name: Download krew bootstrap binary
+      get_url:
+        url: "https://github.com/kubernetes-sigs/krew/releases/download/{{ krew_version_to_install }}/krew.tar.gz"
+        dest: "{{ krew_bootstrap_binary_dest }}"
+
+    - name: Extract krew bootstrap binary
+      unarchive:
+        remote_src: true
+        src: "{{ krew_bootstrap_binary_dest }}"
+        dest: "{{ install_temp_dir.path  }}"
+
+    - name: Install manifest
+      command:
+        argv:
+          - "{{ install_temp_dir.path }}/{{ krew_bootstrap_binary_name }}"
+          - install
+          - "--manifest={{ krew_manifest_dest }}"
+          - "--archive={{ krew_bootstrap_binary_dest }}"
+
+  when: not krew_already_installed
+
+- import_tasks: krew_version.yml
+
+- name: Assert that correct version of crew is installed
+  assert:
+    that:
+      - existing_krew_version is defined
+      - existing_krew_version.rc == 0
+      - existing_krew_version.stdout.find(krew_version_to_install) != -1
+
+- name: Test plugins
+  j_tarasovic.kubernetes_tooling.krew:
+    plugins:
+      - debug
+      - ctx
+      - ns
+    state: present
+  no_log: false
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ ansible_env.HOME }}/.krew/bin"

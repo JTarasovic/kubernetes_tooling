@@ -1,0 +1,9 @@
+---
+
+- name: Get current krew version
+  changed_when: false
+  failed_when: false
+  shell: kubectl-krew version  # noqa 305
+  register: existing_krew_version
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ ansible_env.HOME }}/.krew/bin"
