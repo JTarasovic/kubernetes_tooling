@@ -1,7 +1,7 @@
 ---
 namespace: jtarasovic
 name: kubernetes_tooling
-version: 0.0.2
+version: 0.1.0
 readme: README.md
 
 # A list of the collection's content authors. Can be just the name or in the format 'Full Name <email> (url)
