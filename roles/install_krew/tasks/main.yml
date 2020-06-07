@@ -1,25 +1,15 @@
 ---
 - block:
     - name: Get latest release
-      uri:
-        url: https://api.github.com/repos/kubernetes-sigs/krew/releases/latest
-        status_code: 200
-      register: krew_release
-
-    - name: Assert latest version
-      assert:
-        that:
-          - krew_release is defined
-          - krew_release.json is defined
-          - krew_release.json["tag_name"] is defined
+      set_fact:
+        latest_version: "{{ lookup('artis3n.github.latest_release', 'kubernetes-sigs/krew') }}"
   when: krew_version == "latest"
 
 - name: Set version to download
   changed_when: false
   set_fact:
     krew_version_to_install: |-
-      {{ (krew_version == "latest") |
-      ternary(krew_release.json["tag_name"], krew_version)}}
+      {{ (krew_version == "latest") | ternary(latest_version, krew_version)}}
 
 - import_tasks: krew_version.yml
 

@@ -1,25 +1,18 @@
 ---
 - block:
     - name: Get latest release
-      uri:
-        url: https://api.github.com/repos/kubernetes-sigs/cluster-api-provider-aws/releases/latest
-        status_code: 200
-      register: clusterawsadm_release
-
-    - name: Assert latest version
-      assert:
-        that:
-          - clusterawsadm_release is defined
-          - clusterawsadm_release.json is defined
-          - clusterawsadm_release.json["tag_name"] is defined
+      set_fact:
+        latest_version: "{{ lookup('artis3n.github.latest_release', 'kubernetes-sigs/cluster-api-provider-aws') }}"
   when: clusterawsadm_version == "latest"
+
+- debug:
+    msg: "{{ latest_version }}"
 
 - name: Set version to download
   changed_when: false
   set_fact:
     clusterawsadm_version_to_install: |-
-      {{ (clusterawsadm_version == "latest") |
-      ternary(clusterawsadm_release.json["tag_name"], clusterawsadm_version)}}
+      {{ (clusterawsadm_version == "latest") | ternary(latest_version, clusterawsadm_version)}}
 
 - import_tasks: clusterawsadm_version.yml
 
