@@ -9,7 +9,7 @@
   changed_when: false
   set_fact:
     krew_version_to_install: |-
-      {{ (krew_version == "latest") | ternary(latest_version, krew_version)}}
+      {{ (krew_version == "latest") | ternary(latest_version, krew_version) }}
 
 - import_tasks: krew_version.yml
 

@@ -19,7 +19,7 @@ license_file: ''
 tags: [ ]
 
 dependencies:
-  artis3n.github: ">=v1.0.0"
+  artis3n.github: ">=1.0.0"
 repository: http://example.com/repository
 documentation: http://docs.example.com
 homepage: http://example.com

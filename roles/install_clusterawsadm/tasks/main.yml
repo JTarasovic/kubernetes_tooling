@@ -9,7 +9,7 @@
   changed_when: false
   set_fact:
     clusterawsadm_version_to_install: |-
-      {{ (clusterawsadm_version == "latest") | ternary(latest_version, clusterawsadm_version)}}
+      {{ (clusterawsadm_version == "latest") | ternary(latest_version, clusterawsadm_version) }}
 
 - import_tasks: clusterawsadm_version.yml
 

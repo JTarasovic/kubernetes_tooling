@@ -7,7 +7,7 @@ driver:
 lint: |
   set -e
   yamllint .
-  # ansible-lint -x 701 .
+  ansible-lint -x 701 .
 platforms:
   - name: instance
     image: docker.io/pycontribs/centos:7
