@@ -1,0 +1,46 @@
+---
+- import_tasks: kustomize_version.yml
+
+- name: Determine if new version needs to be installed
+  changed_when: false
+  set_fact:
+    kustomize_already_installed: |-
+      {{ existing_version.rc == 0 and (existing_version["stdout"].find(kustomize_version) != -1) }}
+
+- block:
+    - name: Create temp directory
+      tempfile:
+        state: directory
+        suffix: kustomize
+      register: install_temp_dir
+
+    - name: Determine outputs directories and binary paths
+      set_fact:
+        kustomize_artifact_name: |-
+          kustomize_{{ kustomize_version }}_{{ (ansible_facts["os_family"] == "Darwin") | ternary("darwin", "linux") }}_amd64.tar.gz
+        kustomize_dest: '/usr/local/bin/kustomize'
+      changed_when: false
+
+    - name: Download kustomize
+      unarchive:
+        remote_src: true
+        src: "{{ base_url }}/download/kustomize%2F{{ kustomize_version }}/{{ kustomize_artifact_name }}"
+        dest: "{{ install_temp_dir.path }}"
+
+    - name: Copy to /usr/local/bin/
+      copy:
+        remote_src: true
+        src: "{{ install_temp_dir.path }}/kustomize"
+        dest: "{{ kustomize_dest }}"
+        mode: "u+x,g+x,o+x"
+
+  when: not kustomize_already_installed
+
+- import_tasks: kustomize_version.yml
+
+- name: Assert that correct version of kustomize is installed
+  assert:
+    that:
+      - existing_version is defined
+      - existing_version.rc == 0
+      - existing_version.stdout.find(kustomize_version) != -1
