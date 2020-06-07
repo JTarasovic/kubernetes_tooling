@@ -5,9 +5,6 @@
         latest_version: "{{ lookup('artis3n.github.latest_release', 'kubernetes-sigs/cluster-api-provider-aws') }}"
   when: clusterawsadm_version == "latest"
 
-- debug:
-    msg: "{{ latest_version }}"
-
 - name: Set version to download
   changed_when: false
   set_fact:
